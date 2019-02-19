@@ -9,30 +9,37 @@ app.use(morgan('dev'));
 app.use(cors());
 
 app.get('/apps', (req, res) => {
-  const { sort, genres } = req.query;
+    const { sort, genre } = req.query;
+    let results = store;
 
-  if (sort) {
-    if (!['rating', 'app'].includes(sort)) {
-      return res.status(400).send('Sort must be a rating or app name');
+    if (sort) {
+        if (!['rating', 'app'].includes(sort)) {
+            return res.status(400).send('Sort must be a rating or app name');
+        }
+        if (sort === 'app') {
+            results = results.sort((a, b) => {
+                const firstA = a.App.toLowerCase();
+                const firstB = b.App.toLowerCase();
+                return firstA < firstB ? -1: firstA > firstB ? 1: 0;
+            });
+        } else if (sort === 'rating') {
+            results = results.sort((a, b) => b.Rating - a.Rating);
+        }
     }
-  }
 
-  if (sort === 'app') {
-    let results = store.sort((a, b) => {
-      const firstA = a.App.toLowerCase();
-      const firstB = b.App.toLowerCase();
-      return firstA < firstB ? -1: firstA > firstB ? 1: 0;
-    });
-    return res.send(results);
+    if (genre) {
+        if (!['action', 'puzzle', 'strategy', 'casual', 'arcade', 'card'].includes(genre.toLowerCase())) {
+            return res.status(400).send('Genre must be one of Action, Puzzle, Strategy, Casual, Arcade or Card');
+        }
+        results = results.filter(app => {
+            return app.Genres.toLowerCase() === genre.toLowerCase();
+        });
+    }
 
-  } else if (sort === 'rating') {
-    let results = store.sort((a, b) => b.Rating - a.Rating);
-    return res.send(results);
 
-  }
-  return res.send(JSON.stringify(store));
+    return res.send(results); //JSON.stringity(results)
 });
 
 app.listen(8000, () => {
-  console.log('server running');
+    console.log('server running');
 });
